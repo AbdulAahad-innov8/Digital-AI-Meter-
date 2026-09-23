@@ -1,4 +1,4 @@
-# Digital AI Meter — MLH Hackathon MVP
+ Digital AI Meter — MLH Hackathon MVP
 
 Working prototype with electricity/water dashboard, anomaly detection, prediction endpoint, possible leakage/fault insights, AI-style explanations, alerts, Ask AI, and time-slot analysis.
 
