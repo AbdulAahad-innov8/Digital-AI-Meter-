@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Digital AI Meter</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div class="app">
+      <aside>
+        <div class="brand">◈ <b>Digital AI Meter</b></div>
+        <p class="sub">Smart resource intelligence</p>
+
+        <nav>
+          <div class="active">Dashboard</div>
+          <div>Usage Analytics</div>
+          <div>AI Insights</div>
+          <div>Alerts</div>
+        </nav>
+
+        <div class="status">
+          ● System online<br>
+          <small>Monitoring demo meters MTR-001 / MTR-002</small>
+        </div>
+
+        <footer>MLH Hackathon MVP</footer>
+      </aside>
+
+      <main>
+        <header>
+          <div>
+            <small> DIGITAL AI METER</small>
+            <h1>Good evening, Abdul 👋</h1>
+            <p>Smart electricity & water monitoring powered by AI.</p>
+          </div>
+
+          <div class="toggle">
+            <button id="e" class="active">Electricity</button>
+            <button id="w">Water</button>
+          </div>
+        </header>
+
+        <section class="cards">
+          <div>
+            <span>Current usage</span>
+            <b id="cur">—</b>
+            <small id="u">kWh / hour</small>
+          </div>
+          <div>
+            <span>Average usage</span>
+            <b id="avg">—</b>
+            <small>historical average</small>
+          </div>
+          <div>
+            <span>Peak usage</span>
+            <b id="peak">—</b>
+            <small>highest reading</small>
+          </div>
+          <div class="alert">
+            <span>AI alerts</span>
+            <b id="ac">—</b>
+            <small>unusual patterns</small>
+          </div>
+        </section>
+
+        <section class="grid">
+          <article>
+            <h2>Consumption trend <em>● Live demo data</em></h2>
+            <p>Hourly readings • last 14 days</p>
+            <div id="chart">
+              <svg viewBox="0 0 900 300" preserveAspectRatio="none"></svg>
+            </div>
+          </article>
+
+          <article>
+            <h2>✦ AI insight</h2>
+            <p>What the meter thinks is happening</p>
+            <div id="insight" class="insight">Loading…</div>
+            <hr>
+            <div class="row">
+    <span>Prediction</span>
+    <b>Next 6 hours</b>
+</div>
+<div id="prediction"></div>
+            <div class="row"><span>Detection</span><b>Isolation Forest</b></div>
+            <div class="row"><span>Status</span><b class="good">Monitoring</b></div>
+          </article>
+        </section>
+
+        <section class="grid lower">
+          <article>
+            <h2>Recent alerts</h2>
+            <p>Patterns that deserve attention</p>
+            <div id="alerts"></div>
+          </article>
+
+          <article>
+            <h2>Ask AI Meter</h2>
+            <p>Ask about your current resource usage</p>
+            <div class="ask">
+              <input id="q" placeholder="Ask about your usage, peaks, anomalies or savings...">
+              <button id="ask">Ask</button>
+            </div>
+            <div id="answer" class="answer">Try: “What was my peak usage?”</div>
+          </article>
+        </section>
+
+        <article>
+          <h2>Time-slot analysis</h2>
+          <p>Average consumption by time of day</p>
+          <div class="slots">
+            <div>Night<b id="n">—</b></div>
+            <div>Morning<b id="m">—</b></div>
+            <div>Afternoon<b id="a">—</b></div>
+            <div>Evening<b id="ev">—</b></div>
+          </div>
+        </article>
+      </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
+
