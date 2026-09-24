@@ -8,12 +8,12 @@ async function get(x) {
 }
 
 async function load(){
-    let [s,d,an,i,p] = await Promise.all([
+    let [s,d,an,i,rec] = await Promise.all([
         get('/summary?resource='+r),
         get('/meter-data?resource='+r),
         get('/anomalies?resource='+r),
         get('/ai-insight?resource='+r),
-        get('/prediction?resource='+r)
+        get('/recommendation?resource='+r)
     ]);
 
     $('cur').textContent=s.current.toFixed(2);
@@ -21,12 +21,13 @@ async function load(){
     $('peak').textContent=s.peak.toFixed(2);
     $('ac').textContent=an.length;
     $('u').textContent=unit()+' / hour';
-    $('insight').textContent=i.insight;
 
-    chart(d,p);
+    $('insight').textContent=i.insight;
+    $('recommendation').textContent=rec.recommendation;
+
+    chart(d);
     alerts(an);
     slots(d);
-    predictions(p);
 }
 
 function predictions(p){
@@ -101,18 +102,20 @@ function slots(d) {
   });
 }
 
-$('e').onclick = () => {
-  r = 'electricity';
-  $('e').classList.add('active');
-  $('w').classList.remove('active');
-  load();
+$('e').onclick=()=>{
+    r='electricity';
+    $('e').classList.add('active');
+    $('w').classList.remove('active');
+    load();
+    loadRecommendation();
 };
 
-$('w').onclick = () => {
-  r = 'water';
-  $('w').classList.add('active');
-  $('e').classList.remove('active');
-  load();
+$('w').onclick=()=>{
+    r='water';
+    $('w').classList.add('active');
+    $('e').classList.remove('active');
+    load();
+    loadRecommendation();
 };
 
 $('ask').onclick = async () => {
@@ -122,5 +125,15 @@ $('ask').onclick = async () => {
   $('answer').textContent = x.answer;
 };
 
+async function loadRecommendation(){
+    try {
+        let x = await get('/recommendation?resource='+r);
+        $('recommendation').textContent = x.recommendation;
+    } catch(error) {
+        $('recommendation').textContent = 'Recommendation unavailable.';
+        console.error(error);
+    }
+}
 load();
+loadRecommendation();
 

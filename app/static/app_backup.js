@@ -100,3 +100,10 @@ $('ask').onclick = async () => {
 };
 
 load();
+
+fetch('/recommendation?resource=' + r)
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('recommendation').textContent =
+            data.recommendation;
+    });

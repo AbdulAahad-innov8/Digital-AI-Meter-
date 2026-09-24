@@ -1,6 +1,11 @@
 from pathlib import Path
 from datetime import datetime
 import csv, statistics
+import os
+import snowflake.connector
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -11,12 +16,71 @@ try:
 except Exception: SK=False
 BASE=Path(__file__).resolve().parent.parent; DATA=BASE/'data'/'meter_data.csv'; STATIC=BASE/'app'/'static'
 app=FastAPI(title='Digital AI Meter',version='1.0.0')
+
+def snowflake_connection():
+    return snowflake.connector.connect(
+        account=os.getenv("SNOWFLAKE_ACCOUNT"),
+        user=os.getenv("SNOWFLAKE_USER"),
+        password=os.getenv("SNOWFLAKE_PASSWORD"),
+        warehouse=os.getenv("SNOWFLAKE_WAREHOUSE"),
+        database=os.getenv("SNOWFLAKE_DATABASE"),
+        schema=os.getenv("SNOWFLAKE_SCHEMA")
+    )
+
+@app.get('/snowflake-test')
+def snowflake_test():
+    conn = snowflake_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM METER_DATA")
+    count = cur.fetchone()[0]
+
+    cur.close()
+    conn.close()
+
+    return {
+        "snowflake": "connected",
+        "meter_rows": count
+    }
+
 app.add_middleware(CORSMiddleware,allow_origins=['*'],allow_credentials=True,allow_methods=['*'],allow_headers=['*'])
+
 def load(resource=None):
-    with open(DATA,newline='') as f: d=list(csv.DictReader(f))
-    if resource: d=[r for r in d if r['resource']==resource]
-    for r in d: r['consumption']=float(r['consumption']); r['dt']=datetime.fromisoformat(r['timestamp'])
+    conn = snowflake_connection()
+    cur = conn.cursor()
+
+    if resource:
+        cur.execute("""
+            SELECT TIMESTAMP, METER_ID, RESOURCE, CONSUMPTION
+            FROM METER_DATA
+            WHERE RESOURCE = %s
+            ORDER BY TIMESTAMP
+        """, (resource,))
+    else:
+        cur.execute("""
+            SELECT TIMESTAMP, METER_ID, RESOURCE, CONSUMPTION
+            FROM METER_DATA
+            ORDER BY TIMESTAMP
+        """)
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    d = []
+
+    for timestamp, meter_id, resource_name, consumption in rows:
+        d.append({
+            'timestamp': timestamp.isoformat() if hasattr(timestamp, 'isoformat') else str(timestamp),
+            'meter_id': meter_id,
+            'resource': resource_name,
+            'consumption': float(consumption),
+            'dt': timestamp
+        })
+
     return d
+
 def anomalies(d):
     vals=[r['consumption'] for r in d]
     if len(vals)<10:return []
@@ -45,6 +109,35 @@ def get_anomalies(resource:str=Query('electricity')): return anomalies(load(reso
 def prediction(resource:str=Query('electricity')):
     d=load(resource); v=[r['consumption'] for r in d[-12:]]; base=sum(v)/len(v); slope=(v[-1]-v[0])/max(1,len(v)-1); last=d[-1]['dt']
     return [{'timestamp':last.isoformat(),'predicted':round(max(0,base+slope*(i+1)),2)} for i in range(6)]
+
+@app.get('/recommendation')
+def recommendation(resource: str = Query('electricity')):
+    d = load(resource)
+
+    v = [r['consumption'] for r in d[-12:]]
+    base = sum(v) / len(v)
+    slope = (v[-1] - v[0]) / max(1, len(v) - 1)
+
+    predicted = max(0, base + slope)
+
+    if predicted > base * 1.15:
+        if resource == 'electricity':
+            action = "Predicted usage is increasing. Consider reducing high-consumption appliances during the upcoming hours."
+        else:
+            action = "Predicted water usage is increasing. Check taps, tanks and connected lines for unnecessary consumption."
+    else:
+        if resource == 'electricity':
+            action = "Usage is expected to remain stable. Continue monitoring your consumption and avoid unnecessary appliance usage."
+        else:
+            action = "Water usage is expected to remain stable. Continue monitoring for unnecessary consumption."
+
+    return {
+        "resource": resource,
+        "predicted": round(predicted, 2),
+        "average": round(base, 2),
+        "recommendation": action
+    }
+
 @app.get('/ai-insight')
 def ai_insight(resource:str=Query('electricity')):
     d=load(resource); a=anomalies(d); return {'insight':insight(resource,d,a)}
